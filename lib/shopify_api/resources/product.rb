@@ -16,6 +16,15 @@ module ShopifyAPI
       end
     end
 
+    def serializable_hash(options = {})
+      super.except("total_inventory")
+    end
+
+    def total_inventory=(new_value)
+      raise(ShopifyAPI::ValidationException, 'deprecated behaviour') unless Base.api_version < ApiVersion.find_version('2019-10')
+      super
+    end
+
     def collections
       CustomCollection.find(:all, :params => {:product_id => self.id})
     end
