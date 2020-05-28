@@ -25,7 +25,7 @@ module ShopifyAPI
 
       def client(shop_id, api_version = VERSION)
         initialize_client_cache
-        cached_client = @_client_cache["#{shop_id}_#{api_version}"]
+        cached_client = @_client_cache["#{shop_id}_#{api_version}"] || @_client_cache[api_version.to_s]
 
         if cached_client
           cached_client
@@ -57,6 +57,11 @@ module ShopifyAPI
 
           shop_id, api_version = schema_file.basename.to_s.split('.').first.split('_')
 
+          if api_version.blank?
+            api_version = shop_id
+            shop_id = nil
+          end
+
           next if api_version != VERSION
 
           initialize_client shop_id, schema_file
@@ -69,7 +74,8 @@ module ShopifyAPI
           c.allow_dynamic_queries = true
         end
         initialize_client_cache
-        @_client_cache["#{shop_id}_#{VERSION}"] = client
+        key = [shop_id, VERSION].compact.join('_')
+        @_client_cache[key] = client
       end
 
       def schema_location
@@ -92,7 +98,6 @@ module ShopifyAPI
           puts 'Error: failed to query the API.'
           puts "Response: #{response}"
           puts 'Ensure your SHOP_DOMAIN or SHOP_URL are valid and you have valid authentication credentials.'
-          puts usage
           return
         end
 
