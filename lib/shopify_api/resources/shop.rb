@@ -3,7 +3,7 @@ module ShopifyAPI
   # the shop.
   class Shop < Base
     def self.current(options={})
-      find(:one, options.merge({from: "/admin/shop.#{format.extension}"}))
+      find(:one, options.merge({from: "/admin/api/#{superclass.api_version}/shop.#{format.extension}"}))
     end
 
     def metafields

@@ -15,7 +15,7 @@ module DisablePrefixCheck
       define_singleton_method :prefix do |options = {}|
         resource_type =  options[resource] if flexible
 
-        options[resource_id].nil? ? "/admin/" : "/admin/#{resource_type}/#{options[resource_id]}/"
+        options[resource_id].nil? ? "/admin/api/2019-10/" : "/admin/api/2019-10/#{resource_type}/#{options[resource_id]}/"
       end
 
       define_singleton_method :instantiate_record do |record, prefix_options = {}|

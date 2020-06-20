@@ -51,7 +51,7 @@ module ShopifyAPI
       else
         params = {:asset => {:key => args[0]}}
         params = params.merge(args[1][:params]) if args[1] && args[1][:params]
-        path_prefix = params[:theme_id] ? "/admin/themes/#{params[:theme_id]}" : "/admin"
+        path_prefix = params[:theme_id] ? "/admin/api/#{superclass.api_version}/themes/#{params[:theme_id]}" : "/admin/api/#{superclass.api_version}"
         resource = find(:one, :from => "#{path_prefix}/assets.#{format.extension}", :params => params)
         resource.prefix_options[:theme_id] = params[:theme_id] if resource && params[:theme_id]
         resource
