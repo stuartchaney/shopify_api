@@ -7,6 +7,7 @@ module ShopifyAPI
     end
 
     def self.search(params)
+      params.delete(:page) if params.try(:[],:page).present?
       find(:all, from: :search, params: params)
     end
 
