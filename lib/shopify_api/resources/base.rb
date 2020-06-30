@@ -54,6 +54,10 @@ module ShopifyAPI
         end
       end
 
+      def cursor_based?(api_ver = nil)
+        true 
+      end 
+      
       def all(*args)
         options = args.slice!(0) || {}
 
