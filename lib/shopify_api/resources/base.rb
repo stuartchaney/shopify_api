@@ -31,7 +31,7 @@ module ShopifyAPI
       alias next all
       alias previous all
 
-      threadsafe_attribute(:api_version)
+      threadsafe_attribute(:_api_version)
       if ActiveResource::Base.respond_to?(:_headers) && ActiveResource::Base.respond_to?(:_headers_defined?)
         def headers
           if _headers_defined?
@@ -54,10 +54,69 @@ module ShopifyAPI
         end
       end
 
-      def cursor_based?(api_ver = nil)
-        true 
-      end 
-      
+      def cursor_based?(_api_ver = nil)
+        true
+      end
+
+      def api_version
+        if _api_version_defined?
+          _api_version
+        elsif superclass != Object && superclass.site
+          superclass.api_version.dup.freeze
+        else
+          'ERROR_VERSION'#'2019-07'
+        end
+      end
+
+      def api_version=(version)
+        self._api_version = version
+      end
+
+      def prefix(options = {})
+        "/admin/api/#{api_version}/#{resource_prefix(options)}"
+      end
+
+      def prefix_source
+        ''
+      end
+
+      def resource_prefix(_options = {})
+        ''
+      end
+
+      # Sets the \prefix for a resource's nested URL (e.g., <tt>prefix/collectionname/1.json</tt>).
+      # Default value is <tt>site.path</tt>.
+      def resource_prefix=(value)
+        @prefix_parameters = nil
+
+        resource_prefix_call = value.gsub(/:\w+/) { |key| "\#{URI.parser.escape options[#{key}].to_s}" }
+
+        silence_warnings do
+          # Redefine the new methods.
+          instance_eval <<-RUBY_EVAL, __FILE__, __LINE__ + 1
+            def prefix_source() "#{value}" end
+            def resource_prefix(options={}) "#{resource_prefix_call}" end
+          RUBY_EVAL
+        end
+      rescue => e
+        logger&.error("Couldn't set prefix: #{e}\n  #{code}")
+        raise
+      end
+
+      def prefix=(value)
+        if value.start_with?('/admin')
+          raise ArgumentError, "'#{value}' can no longer start /admin/. Change to using resource_prefix="
+        end
+
+        warn(
+          '[DEPRECATED] ShopifyAPI::Base#prefix= is deprecated and will be removed in a future version. ' \
+            'Use `self.resource_prefix=` instead.'
+        )
+        self.resource_prefix = value
+      end
+
+      alias_method :set_prefix, :prefix=
+
       def all(*args)
         options = args.slice!(0) || {}
 
@@ -66,6 +125,7 @@ module ShopifyAPI
           options[:params].delete :page
 
           options[:params].slice!(:page_info, :limit, :fields) if options.dig(:params, :page_info).present?
+          options[:params].slice!(:since_id, :limit, :fields) if options.dig(:params, :since_id).present?
 
           options[:params].delete_if { |_k, v| v.nil? }
         end
@@ -179,7 +239,7 @@ module ShopifyAPI
       end
 
       def init_prefix_explicit(resource_type, resource_id)
-        self.prefix = "/admin/api/2019-10/#{resource_type}/:#{resource_id}/"
+        self.resource_prefix = "#{resource_type}/:#{resource_id}/"
 
         define_method resource_id.to_sym do
           @prefix_options[resource_id]
