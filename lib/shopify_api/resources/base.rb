@@ -125,7 +125,6 @@ module ShopifyAPI
           options[:params].delete :page
 
           options[:params].slice!(:page_info, :limit, :fields) if options.dig(:params, :page_info).present?
-          options[:params].slice!(:since_id, :limit, :fields) if options.dig(:params, :since_id).present?
 
           options[:params].delete_if { |_k, v| v.nil? }
         end
